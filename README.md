@@ -10,10 +10,10 @@ To use the library create a VTSPlugin instance and use the functions it provides
 module app;
 
 import vts;
-import core.thread;
 import std.datetime;
 import std.stdio : writeln;
 import std.random : choice;
+import vibe.core.core : sleep;
 
 void main() {
     VTSPlugin plugin = new VTSPlugin(PluginInfo("Test", "Me", null), "127.0.0.1");
@@ -23,9 +23,12 @@ void main() {
     do {
         if (models.length > 0) plugin.tryLoadModel(choice(models).modelId);
         
-        Thread.sleep(5.seconds);
+        sleep(5.seconds);
     } while(plugin.isConnected());
 
     plugin.disconnect();
 }
 ```
+
+## Known Issues
+ * If VTube Studio is closed the application will segfault, some bug deep within vibe-d is causing it.
