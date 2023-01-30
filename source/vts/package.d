@@ -14,7 +14,7 @@ import vibe.inet.url;
 import std.format;
 public import vts.data;
 import std.datetime;
-debug(verbose) import std.stdio : writeln;
+debug import std.stdio : writeln;
 
 alias PluginInfo = VTSAuthenticationTokenRequestData;
 
@@ -35,13 +35,25 @@ private:
     typeof(Response.data)* sendRequest(Request, Response)(typeof(Request.data) request, Duration timeout=5.seconds) if (__traits(hasMember, Request, "data") && __traits(hasMember, Response, "data")) {
         auto req = Request(reqId, request);
         debug(verbose) writeln(req);
-        return &sendRequest_!(Request, Response)(req, timeout).data;
+        auto res = this.sendRequest_!(Request, Response)(req, timeout);
+        if (res) {
+            auto data = new typeof(Response.data);
+            *data = res.data;
+            return data;
+        }
+        return null;
     }
 
     typeof(Response.data)* sendRequest(Request, Response)(Duration timeout=5.seconds) if (!__traits(hasMember, Request, "data") && __traits(hasMember, Response, "data")) {
         auto req = Request(reqId);
         debug(verbose) writeln(req);
-        return &sendRequest_!(Request, Response)(req, timeout).data;
+        auto res = this.sendRequest_!(Request, Response)(req, timeout);
+        if (res) {
+            auto data = new typeof(Response.data);
+            *data = res.data;
+            return data;
+        }
+        return null;
     }
 
     Response* sendRequest(Request, Response)(typeof(Request.data) request, Duration timeout=5.seconds) if (__traits(hasMember, Request, "data") && !__traits(hasMember, Response, "data")) {
@@ -56,6 +68,7 @@ private:
         return sendRequest_!(req, Response)(request, timeout);
     }
 
+    pragma(inline, false)
     Response* sendRequest_(Request, Response)(Request request, Duration timeout=5.seconds) {
         socket.send(vtsSerialize(request));
         string rid = "";
@@ -225,25 +238,25 @@ public:
     /**
         Requests state information from VTube Studio
     */
-    VTSAPIStateResponseData requestStateInfo() {
+    VTSAPIStateResponseData* requestStateInfo() {
         this.ensureConnected();
-        return *this.sendRequest!(VTSAPIStateRequest, VTSAPIStateResponse)();
+        return this.sendRequest!(VTSAPIStateRequest, VTSAPIStateResponse)();
     }
 
     /**
         Request a token from VTS
     */
-    VTSAuthenticationTokenResponseData requestToken(PluginInfo info) {
+    VTSAuthenticationTokenResponseData* requestToken(PluginInfo info) {
         this.ensureConnected();
         auto response = this.sendRequest!(VTSAuthenticationTokenRequest, VTSAuthenticationTokenResponse)(info, Duration.max);
         this.info = info;
-        return *response;
+        return response;
     }
 
     /**
         Authenticate with a token from VTS
     */
-    VTSAuthenticationResponseData authenticate(string token) {
+    VTSAuthenticationResponseData* authenticate(string token) {
         this.ensureConnected();
         auto response = this.sendRequest!(VTSAuthenticationRequest, VTSAuthenticationResponse)(VTSAuthenticationRequestData(
             info.pluginName, 
@@ -252,7 +265,7 @@ public:
         ));
         this.authenticated = response.authenticated;
         if (!response.authenticated) throw new VTSException(-1, response.reason);
-        return *response;    
+        return response;    
     }
 
     /**
@@ -260,9 +273,9 @@ public:
 
         Get statistics about currently running VTube Studio instance
     */
-    VTSStatisticsResponseData getStatistics() {
+    VTSStatisticsResponseData* getStatistics() {
         this.ensureAuthenticated();
-        return *this.sendRequest!(VTSStatisticsRequest, VTSStatisticsResponse)();
+        return this.sendRequest!(VTSStatisticsRequest, VTSStatisticsResponse)();
     }
 
     /**
@@ -270,9 +283,9 @@ public:
 
         Get statistics about currently running VTube Studio instance
     */
-    VTSFolderInfoResponseData getFolderInfo() {
+    VTSFolderInfoResponseData* getFolderInfo() {
         this.ensureAuthenticated();
-        return *this.sendRequest!(VTSFolderInfoRequest, VTSFolderInfoResponse)();
+        return this.sendRequest!(VTSFolderInfoRequest, VTSFolderInfoResponse)();
     }
 
     /**
@@ -280,9 +293,9 @@ public:
 
         Gets information about the currently loaded model
     */
-    VTSCurrentModelResponseData getCurrentModel() {
+    VTSCurrentModelResponseData* getCurrentModel() {
         this.ensureAuthenticated();
-        return *this.sendRequest!(VTSCurrentModelRequest, VTSCurrentModelResponse)();
+        return this.sendRequest!(VTSCurrentModelRequest, VTSCurrentModelResponse)();
     }
 
     /**
@@ -292,7 +305,8 @@ public:
     */
     VTSAvailableModel[] getModels() {
         this.ensureAuthenticated();
-        return this.sendRequest!(VTSAvailableModelsRequest, VTSAvailableModelsResponse)().availableModels.dup;
+        auto response = this.sendRequest!(VTSAvailableModelsRequest, VTSAvailableModelsResponse)();
+        return response !is null ? response.availableModels.dup : null;
     }
 
     /**
@@ -306,6 +320,7 @@ public:
     */
     bool tryLoadModel(string id) {
         this.ensureAuthenticated();
-        return this.sendRequest!(VTSModelLoadRequest, VTSModelLoadResponse)(VTSModelLoadRequestData(id)).modelID == id;
+        auto response = this.sendRequest!(VTSModelLoadRequest, VTSModelLoadResponse)(VTSModelLoadRequestData(id));
+        return response !is null && response.modelID.dup == id;
     }
 }

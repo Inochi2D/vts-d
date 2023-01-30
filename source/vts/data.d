@@ -214,11 +214,6 @@ struct VTSResponse(T, string type) {
 
     @serdeKeys("data")
     T data;
-
-    this(ref return scope inout(typeof(this)) src) inout {
-        foreach (i, ref inout field; src.tupleof)
-            this.tupleof[i] = field;
-    }
 }
 
 alias VTSAPIStateResponse = VTSRequest!(VTSAPIStateResponseData, "APIStateResponse");
