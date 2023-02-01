@@ -442,7 +442,7 @@ struct VTSCurrentModelResponseData {
 
 /**
     Protocol:
-        "data": {
+        {
             "numberOfModels": 2,
             "availableModels": [
                 {

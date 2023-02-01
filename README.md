@@ -31,4 +31,4 @@ void main() {
 ```
 
 ## Known Issues
- * If VTube Studio is closed the application will segfault, some bug deep within vibe-d is causing it.
+ * If VTube Studio is closed the application will segfault, some bug deep within vibe-d is causing it. (see [vibe.d#2706](https://github.com/vibe-d/vibe.d/issues/2706))
