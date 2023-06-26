@@ -8,7 +8,7 @@
     VTube Studio Plugin Integration
 */
 module vts;
-import vibe.http.websockets;
+import vts.websockets;
 import vibe.core.stream;
 import vibe.inet.url;
 import std.format;
@@ -26,7 +26,7 @@ private:
     PluginInfo info;
     string ip;
     ushort port;
-    WebSocket socket;
+    SimpleWebSocket socket;
     string reqId;
 
     string token;
@@ -148,7 +148,7 @@ public:
         Connects to the API
     */
     void connect() {
-        if (!this.isConnected()) socket = connectWebSocket(URL("ws://%s:%u".format(ip, port)));
+        if (!this.isConnected()) socket = connectSimpleWebSocket(URL("ws://%s:%u".format(ip, port)));
     }
 
     /**
