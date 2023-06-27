@@ -110,7 +110,7 @@ private:
 
     void receiveThread() {
         isCloseRequested = false;
-        vibe.http.websockets.connectWebSocket(serverUrl, &this.handleConnection);
+        connectWebSocket(serverUrl, &this.handleConnection);
     }
 
 protected:
